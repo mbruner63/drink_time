@@ -285,4 +285,44 @@ class CouponHelper {
   static String getPurchaserName(Map<String, dynamic> coupon) {
     return coupon['purchaser_username'] as String? ?? 'Unknown Purchaser';
   }
+
+  /// Get bar address from coupon data (if available)
+  static String? getBarAddress(Map<String, dynamic> coupon) {
+    return coupon['bar_address'] as String?;
+  }
+
+  /// Get bar coordinates (latitude and longitude) from coupon data (if available)
+  static Map<String, double>? getBarCoordinates(Map<String, dynamic> coupon) {
+    final latitude = coupon['bar_latitude'] as double?;
+    final longitude = coupon['bar_longitude'] as double?;
+
+    if (latitude != null && longitude != null) {
+      return {'latitude': latitude, 'longitude': longitude};
+    }
+    return null;
+  }
+
+  /// Generate Google Maps URL for the bar
+  static String getGoogleMapsUrl(Map<String, dynamic> coupon) {
+    final coordinates = getBarCoordinates(coupon);
+    final address = getBarAddress(coupon);
+    final barName = getBarName(coupon);
+
+    // If we have coordinates, use them for precise location
+    if (coordinates != null) {
+      final lat = coordinates['latitude']!;
+      final lng = coordinates['longitude']!;
+      return 'https://www.google.com/maps/search/?api=1&query=$lat,$lng';
+    }
+
+    // If we have an address, use it
+    if (address != null && address.isNotEmpty) {
+      final encodedAddress = Uri.encodeComponent(address);
+      return 'https://www.google.com/maps/search/?api=1&query=$encodedAddress';
+    }
+
+    // Fallback to bar name search
+    final encodedBarName = Uri.encodeComponent(barName);
+    return 'https://www.google.com/maps/search/?api=1&query=$encodedBarName';
+  }
 }

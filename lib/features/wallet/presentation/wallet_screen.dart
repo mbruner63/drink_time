@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'wallet_controller.dart';
 import '../../auth/presentation/auth_controller.dart';
 
@@ -133,6 +134,23 @@ class _WalletScreenState extends ConsumerState<WalletScreen> with TickerProvider
                 ),
 
                 const SizedBox(height: 20),
+
+                // Maps button
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () => _openMapForBar(coupon),
+                    icon: const Icon(FontAwesomeIcons.locationDot),
+                    label: Text('View $barName on Map'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF4682B4),
+                      side: const BorderSide(color: Color(0xFF4682B4)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
 
                 // Actions
                 Row(
@@ -292,6 +310,42 @@ class _WalletScreenState extends ConsumerState<WalletScreen> with TickerProvider
       }
     } catch (e) {
       print('💥 UI: Exception caught in _shareCoupon: $e');
+    }
+  }
+
+  void _openMapForBar(Map<String, dynamic> coupon) async {
+    final mapsUrl = CouponHelper.getGoogleMapsUrl(coupon);
+    final barName = CouponHelper.getBarName(coupon);
+
+    print('📍 Opening map for bar: $barName');
+    print('   🗺️ Maps URL: $mapsUrl');
+
+    try {
+      final uri = Uri.parse(mapsUrl);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        print('✅ Maps opened successfully');
+      } else {
+        print('❌ Cannot open maps URL');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Could not open maps for $barName'),
+              backgroundColor: Colors.red.shade600,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('💥 Error opening maps: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error opening maps: $e'),
+            backgroundColor: Colors.red.shade600,
+          ),
+        );
+      }
     }
   }
 
@@ -590,13 +644,34 @@ class _WalletScreenState extends ConsumerState<WalletScreen> with TickerProvider
                 ),
               ),
 
-              // Action indicator
-              if (canUse)
-                Icon(
-                  FontAwesomeIcons.qrcode,
-                  color: Colors.grey.shade400,
-                  size: 20,
-                ),
+              // Action buttons
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Maps button
+                  IconButton(
+                    onPressed: () => _openMapForBar(coupon),
+                    icon: Icon(
+                      FontAwesomeIcons.locationDot,
+                      color: const Color(0xFF4682B4),
+                      size: 18,
+                    ),
+                    tooltip: 'View on Map',
+                    padding: const EdgeInsets.all(8),
+                    constraints: const BoxConstraints(
+                      minWidth: 32,
+                      minHeight: 32,
+                    ),
+                  ),
+                  // QR code indicator
+                  if (canUse)
+                    Icon(
+                      FontAwesomeIcons.qrcode,
+                      color: Colors.grey.shade400,
+                      size: 20,
+                    ),
+                ],
+              ),
             ],
           ),
         ),

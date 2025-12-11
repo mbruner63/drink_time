@@ -26,6 +26,8 @@ dependencies:
   # QR Codes
   qr_flutter: ^4.1.0
   mobile_scanner: ^5.0.0
+  # URL Launcher for Maps
+  url_launcher: ^6.2.2
 
 dev_dependencies:
   flutter_test:
