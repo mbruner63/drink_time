@@ -315,9 +315,11 @@ class _WalletScreenState extends ConsumerState<WalletScreen> with TickerProvider
 
   void _openMapForBar(Map<String, dynamic> coupon) async {
     final barName = CouponHelper.getBarName(coupon);
-    final coordinates = CouponHelper.getBarCoordinates(coupon);
 
     print('📍 Opening map for bar: $barName');
+    print('   📍 Read Lat: ${coupon['bar_lat']}, Long: ${coupon['bar_long']}');
+
+    final coordinates = CouponHelper.getBarCoordinates(coupon);
     print('   📊 Coordinates from coupon: $coordinates');
     print('   🗃️ Full coupon data structure: ${coupon.toString()}');
 

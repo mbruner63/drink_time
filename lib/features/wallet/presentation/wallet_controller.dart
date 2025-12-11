@@ -292,10 +292,10 @@ class CouponHelper {
   }
 
   /// Get bar coordinates (latitude and longitude) from coupon data
-  /// Expects bar_latitude and bar_longitude fields from SQL function
+  /// Expects bar_lat and bar_long fields from SQL function
   static Map<String, double>? getBarCoordinates(Map<String, dynamic> coupon) {
-    final latitude = coupon['bar_latitude'] as double?;
-    final longitude = coupon['bar_longitude'] as double?;
+    final latitude = coupon['bar_lat'] as double?;
+    final longitude = coupon['bar_long'] as double?;
 
     if (latitude != null && longitude != null) {
       return {'latitude': latitude, 'longitude': longitude};
