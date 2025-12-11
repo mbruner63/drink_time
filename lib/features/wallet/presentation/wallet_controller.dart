@@ -291,17 +291,11 @@ class CouponHelper {
     return coupon['bar_address'] as String?;
   }
 
-  /// Get bar coordinates (latitude and longitude) from coupon data (if available)
+  /// Get bar coordinates (latitude and longitude) from coupon data
+  /// Expects bar_latitude and bar_longitude fields from SQL function
   static Map<String, double>? getBarCoordinates(Map<String, dynamic> coupon) {
-    // Try multiple possible field names for coordinates
-    final latitude = coupon['bar_latitude'] as double? ??
-                    coupon['location_lat'] as double? ??
-                    coupon['lat'] as double?;
-
-    final longitude = coupon['bar_longitude'] as double? ??
-                     coupon['location_long'] as double? ??
-                     coupon['lng'] as double? ??
-                     coupon['long'] as double?;
+    final latitude = coupon['bar_latitude'] as double?;
+    final longitude = coupon['bar_longitude'] as double?;
 
     if (latitude != null && longitude != null) {
       return {'latitude': latitude, 'longitude': longitude};

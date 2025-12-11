@@ -315,53 +315,41 @@ class _WalletScreenState extends ConsumerState<WalletScreen> with TickerProvider
 
   void _openMapForBar(Map<String, dynamic> coupon) async {
     final barName = CouponHelper.getBarName(coupon);
-    var coordinates = CouponHelper.getBarCoordinates(coupon);
+    final coordinates = CouponHelper.getBarCoordinates(coupon);
 
     print('📍 Opening map for bar: $barName');
-    print('   📊 Available coordinates from coupon: $coordinates');
+    print('   📊 Coordinates from coupon: $coordinates');
     print('   🗃️ Full coupon data structure: ${coupon.toString()}');
 
-    // If coordinates aren't in coupon data, try to fetch from bars table
+    // ONLY use coordinates - no fallbacks to bar name search
     if (coordinates == null) {
-      final barId = CouponHelper.getBarId(coupon);
-      print('   🔍 No coordinates in coupon, trying to fetch for barId: $barId');
-
-      if (barId != null) {
-        try {
-          final repository = ref.read(walletRepositoryProvider);
-          coordinates = await repository.getBarCoordinates(barId);
-          print('   📊 Fetched coordinates: $coordinates');
-        } catch (e) {
-          print('   💥 Error fetching coordinates: $e');
-        }
+      print('❌ No coordinates available - SQL function needs to be updated');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Location data not available for $barName. Please update the database.'),
+            backgroundColor: Colors.red.shade600,
+            duration: const Duration(seconds: 4),
+          ),
+        );
       }
+      return;
     }
 
-    // List of URL formats to try in order of preference
-    final List<String> mapUrls = [];
+    final lat = coordinates['latitude']!;
+    final lng = coordinates['longitude']!;
 
-    // 1. Try coordinates if available (most accurate)
-    if (coordinates != null) {
-      final lat = coordinates['latitude']!;
-      final lng = coordinates['longitude']!;
-      mapUrls.addAll([
-        'geo:$lat,$lng?q=$lat,$lng($barName)', // Android geo intent
-        'https://www.google.com/maps/search/?api=1&query=$lat,$lng', // Google Maps web
-        'https://maps.google.com/?q=$lat,$lng', // Alternative Google Maps
-        'https://maps.apple.com/?ll=$lat,$lng&q=$barName', // Apple Maps
-      ]);
-    }
+    // Only use coordinate-based URLs
+    final List<String> mapUrls = [
+      'geo:$lat,$lng?q=$lat,$lng', // Android geo intent with coordinates
+      'https://www.google.com/maps/search/?api=1&query=$lat,$lng', // Google Maps web
+      'https://maps.google.com/?q=$lat,$lng', // Alternative Google Maps
+      'https://maps.apple.com/?ll=$lat,$lng', // Apple Maps
+    ];
 
-    // 2. Fallback to bar name search
-    final encodedBarName = Uri.encodeComponent(barName);
-    mapUrls.addAll([
-      'geo:0,0?q=$encodedBarName', // Android geo search
-      'https://www.google.com/maps/search/?api=1&query=$encodedBarName', // Google Maps search
-      'https://maps.google.com/?q=$encodedBarName', // Alternative Google Maps
-      'https://maps.apple.com/?q=$encodedBarName', // Apple Maps search
-    ]);
+    print('   🎯 Using coordinates: $lat, $lng');
 
-    // Try each URL until one works
+    // Try each coordinate-based URL until one works
     bool mapOpened = false;
     for (int i = 0; i < mapUrls.length && !mapOpened; i++) {
       final url = mapUrls[i];
@@ -382,11 +370,11 @@ class _WalletScreenState extends ConsumerState<WalletScreen> with TickerProvider
     }
 
     if (!mapOpened) {
-      print('💥 All map URLs failed');
+      print('💥 All coordinate-based URLs failed');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Could not open maps for $barName. Please search for "$barName" manually in your maps app.'),
+            content: Text('Could not open maps app. Coordinates: $lat, $lng'),
             backgroundColor: Colors.red.shade600,
             duration: const Duration(seconds: 4),
           ),
