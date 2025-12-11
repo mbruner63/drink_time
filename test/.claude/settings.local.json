@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/marty/Documents/drink_time/**)",
+      "Bash(dart tool/generate_icon.dart:*)",
+      "Bash(flutter pub:*)",
+      "Bash(python:*)",
+      "Bash(dart run:*)",
+      "Bash(flutter analyze:*)",
+      "Bash(flutter build:*)",
+      "Bash(find:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

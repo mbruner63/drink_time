@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DrinkTime Icon Generator</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        .icon-container {
+            width: 300px;
+            height: 300px;
+            margin: 20px auto;
+            position: relative;
+        }
+        .icon {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #87CEEB 0%, #4682B4 100%);
+            border-radius: 20%;
+            position: relative;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        .inner-circle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70%;
+            height: 70%;
+            background: rgba(70, 130, 180, 0.3);
+            border-radius: 50%;
+        }
+        .dt-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 100px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+            font-family: 'Arial Black', Arial, sans-serif;
+        }
+        .glass-icon {
+            position: absolute;
+            bottom: 15%;
+            right: 15%;
+            width: 50px;
+            height: 50px;
+            background: #FF8C00;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .glass {
+            color: white;
+            font-size: 24px;
+        }
+        button {
+            display: block;
+            margin: 20px auto;
+            padding: 15px 30px;
+            background: #4682B4;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #1E3A8A;
+        }
+        #instructions {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div id="instructions">
+        <h2>DrinkTime App Icon Generator</h2>
+        <p><strong>Instructions:</strong></p>
+        <ol>
+            <li>Right-click on the icon below and select "Save image as..."</li>
+            <li>Save it as "app_icon_1024.png" in the assets/icons/ folder</li>
+            <li>Or take a screenshot and resize to 1024x1024 pixels</li>
+            <li>Then run: <code>dart run flutter_launcher_icons</code></li>
+        </ol>
+    </div>
+
+    <div class="icon-container">
+        <div class="icon" id="appIcon">
+            <div class="inner-circle"></div>
+            <div class="dt-text">DT</div>
+            <div class="glass-icon">
+                <div class="glass">🍸</div>
+            </div>
+        </div>
+    </div>
+
+    <button onclick="downloadIcon()">Download as PNG (Experimental)</button>
+
+    <script>
+        async function downloadIcon() {
+            try {
+                const iconElement = document.getElementById('appIcon');
+
+                // Use html2canvas if available, otherwise show instructions
+                if (typeof html2canvas !== 'undefined') {
+                    const canvas = await html2canvas(iconElement, {
+                        width: 1024,
+                        height: 1024,
+                        scale: 1024/300
+                    });
+
+                    canvas.toBlob(function(blob) {
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'app_icon_1024.png';
+                        a.click();
+                        URL.revokeObjectURL(url);
+                    }, 'image/png');
+                } else {
+                    alert('Please take a screenshot of the icon and resize it to 1024x1024 pixels manually, then save as app_icon_1024.png');
+                }
+            } catch (error) {
+                alert('Please take a screenshot of the icon and resize it to 1024x1024 pixels manually, then save as app_icon_1024.png');
+            }
+        }
+    </script>
+
+    <!-- Optional: Include html2canvas for automatic download -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</body>
+</html>
