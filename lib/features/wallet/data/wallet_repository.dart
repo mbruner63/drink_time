@@ -323,6 +323,49 @@ class WalletRepository {
     }
   }
 
+  /// Get bar location coordinates by bar ID
+  Future<Map<String, double>?> getBarCoordinates(String barId) async {
+    print('📍 SQL DEBUG: getBarCoordinates() called');
+    print('   📝 barId: $barId');
+
+    try {
+      print('   🚀 Executing bar coordinates query');
+      print('   📊 Table: bars');
+      print('   🔗 Select: location_lat, location_long');
+      print('   🎯 Filter: id.eq.$barId');
+
+      final response = await _client
+          .from('bars')
+          .select('location_lat, location_long')
+          .eq('id', barId)
+          .single();
+
+      print('   ✅ Query successful - Response: ${response.toString()}');
+
+      final lat = response['location_lat'] as double?;
+      final lng = response['location_long'] as double?;
+
+      if (lat != null && lng != null) {
+        final coordinates = {'latitude': lat, 'longitude': lng};
+        print('   🎉 getBarCoordinates() completed - coordinates: $coordinates');
+        return coordinates;
+      } else {
+        print('   ⚠️ No valid coordinates found');
+        return null;
+      }
+    } on PostgrestException catch (e) {
+      print('   ❌ PostgrestException in getBarCoordinates():');
+      print('      Code: ${e.code}');
+      print('      Message: ${e.message}');
+      print('      Details: ${e.details}');
+      print('      Hint: ${e.hint}');
+      return null;
+    } catch (e) {
+      print('   💥 General exception in getBarCoordinates(): $e');
+      return null;
+    }
+  }
+
   /// Debug function to inspect database schema and data
   Future<void> debugDatabaseInfo() async {
     print('🔍 =================DEBUG DATABASE INFO=================');
@@ -371,6 +414,20 @@ class WalletRepository {
           .single();
       print('   ✅ Test coupon query successful');
       print('   Test coupon structure: ${testCoupon.toString()}');
+
+      // Check bars table for location data
+      print('🔍 SQL DEBUG: About to query BARS table for location data');
+      print('   📊 Table: bars');
+      print('   🔗 Select: id, name, location_lat, location_long');
+      print('   📏 Limit: 3');
+      print('🏢 BARS TABLE:');
+
+      final bars = await _client
+          .from('bars')
+          .select('id, name, location_lat, location_long')
+          .limit(3);
+      print('   ✅ Bars query successful');
+      print('   Sample bars: ${bars.toString()}');
 
     } catch (e) {
       print('❌ Error during database inspection: $e');

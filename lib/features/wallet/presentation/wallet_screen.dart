@@ -314,35 +314,81 @@ class _WalletScreenState extends ConsumerState<WalletScreen> with TickerProvider
   }
 
   void _openMapForBar(Map<String, dynamic> coupon) async {
-    final mapsUrl = CouponHelper.getGoogleMapsUrl(coupon);
     final barName = CouponHelper.getBarName(coupon);
+    var coordinates = CouponHelper.getBarCoordinates(coupon);
 
     print('📍 Opening map for bar: $barName');
-    print('   🗺️ Maps URL: $mapsUrl');
+    print('   📊 Available coordinates from coupon: $coordinates');
+    print('   🗃️ Full coupon data structure: ${coupon.toString()}');
 
-    try {
-      final uri = Uri.parse(mapsUrl);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-        print('✅ Maps opened successfully');
-      } else {
-        print('❌ Cannot open maps URL');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Could not open maps for $barName'),
-              backgroundColor: Colors.red.shade600,
-            ),
-          );
+    // If coordinates aren't in coupon data, try to fetch from bars table
+    if (coordinates == null) {
+      final barId = CouponHelper.getBarId(coupon);
+      print('   🔍 No coordinates in coupon, trying to fetch for barId: $barId');
+
+      if (barId != null) {
+        try {
+          final repository = ref.read(walletRepositoryProvider);
+          coordinates = await repository.getBarCoordinates(barId);
+          print('   📊 Fetched coordinates: $coordinates');
+        } catch (e) {
+          print('   💥 Error fetching coordinates: $e');
         }
       }
-    } catch (e) {
-      print('💥 Error opening maps: $e');
+    }
+
+    // List of URL formats to try in order of preference
+    final List<String> mapUrls = [];
+
+    // 1. Try coordinates if available (most accurate)
+    if (coordinates != null) {
+      final lat = coordinates['latitude']!;
+      final lng = coordinates['longitude']!;
+      mapUrls.addAll([
+        'geo:$lat,$lng?q=$lat,$lng($barName)', // Android geo intent
+        'https://www.google.com/maps/search/?api=1&query=$lat,$lng', // Google Maps web
+        'https://maps.google.com/?q=$lat,$lng', // Alternative Google Maps
+        'https://maps.apple.com/?ll=$lat,$lng&q=$barName', // Apple Maps
+      ]);
+    }
+
+    // 2. Fallback to bar name search
+    final encodedBarName = Uri.encodeComponent(barName);
+    mapUrls.addAll([
+      'geo:0,0?q=$encodedBarName', // Android geo search
+      'https://www.google.com/maps/search/?api=1&query=$encodedBarName', // Google Maps search
+      'https://maps.google.com/?q=$encodedBarName', // Alternative Google Maps
+      'https://maps.apple.com/?q=$encodedBarName', // Apple Maps search
+    ]);
+
+    // Try each URL until one works
+    bool mapOpened = false;
+    for (int i = 0; i < mapUrls.length && !mapOpened; i++) {
+      final url = mapUrls[i];
+      print('   🔗 Trying URL ${i + 1}: $url');
+
+      try {
+        final uri = Uri.parse(url);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+          print('   ✅ Maps opened successfully with URL ${i + 1}');
+          mapOpened = true;
+        } else {
+          print('   ❌ Cannot launch URL ${i + 1}');
+        }
+      } catch (e) {
+        print('   💥 Error with URL ${i + 1}: $e');
+      }
+    }
+
+    if (!mapOpened) {
+      print('💥 All map URLs failed');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error opening maps: $e'),
+            content: Text('Could not open maps for $barName. Please search for "$barName" manually in your maps app.'),
             backgroundColor: Colors.red.shade600,
+            duration: const Duration(seconds: 4),
           ),
         );
       }
